@@ -90,7 +90,11 @@ def find_urls(str):
 
 def get_umsi_data():
 	unique_identifier = "umsi_directory_data"
-	if unique_identifier not in CACHE_DICTION:
+	if unique_identifier in CACHE_DICTION:
+		print ("Getting data from cache")
+		return CACHE_DICTION[unique_identifier]
+	else:
+		list_of_htmls = []
 		print('getting data from internet')
 		for i in range(0, 12):
 			url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=" + str(i)
@@ -103,21 +107,21 @@ def get_umsi_data():
 		f.close()
 		return CACHE_DICTION[unique_identifier]
 
-	else:
-		print ("Getting data from cache")
-		return CACHE_DICTION[unique_identifier]
 
+umsi_html = get_umsi_data()
 
 
 
 ## PART 2 (b) - Create a dictionary saved in a variable umsi_titles 
 ## whose keys are UMSI people's names, and whose associated values are those people's titles, e.g. "PhD student" or "Associate Professor of Information"...
+
 umsi_titles = {}
-for i in range(0, 12):
-	url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=" + str(i)
-	r = requests.get(url, headers={'User-Agent': 'SI_CLASS'})
-	get_html = r.text
-	soup = BeautifulSoup(get_html, "html.parser")
+# for i in range(0, 12):
+# 	url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=" + str(i)
+# 	r = requests.get(url, headers={'User-Agent': 'SI_CLASS'})
+# 	get_html = r.text
+for i in umsi_html:
+	soup = BeautifulSoup(i, "html.parser")
 	people = soup.find_all("div",{"class":"views-row"})
 	for person in people:
 		name = person.find("div", {"property":"dc:title"}).h2.text
@@ -182,7 +186,9 @@ tweet_urls_found = []
 for i in range(5):
 	print ("------- tweet URL --------")
 	print (find_urls(five_tweets[i]))
-	tweet_urls_found.append(find_urls(five_tweets[i]))
+	tweet = find_urls(five_tweets[i])
+	for t in tweet:
+		tweet_urls_found.append(t)
 
 
 
