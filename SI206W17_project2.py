@@ -47,7 +47,7 @@ try:
 	x = open(CACHE_FNAME, 'w')
 	cached_contents = x.write()
 	CACHE_DICTION = json.loads(cached_contents)
-	#close the file
+	x.close()
 
 	
 except:
@@ -98,19 +98,23 @@ def find_urls(str):
 ## End with this page: https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=11 
 
 def get_umsi_data():
-	key = "umsi_directory_data"
-	if key not in CACHE_DICTION:
+	unique_identifier = "umsi_directory_data"
+	if unique_identifier not in CACHE_DICTION:
+		print('getting data from internet')
 		for i in range(0, 12):
 			url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=" + str(i)
 			r = requests.get(url, headers={'User-Agent': 'SI_CLASS'})
 			get_url = r.text
 			list_of_htmls.append(get_url)
-		
-		CACHE_DICTION[key] = list_of_htmls
-		return CACHE_DICTION[key]
+		f = open(CACHE_FNAME,'w') # open the cache file for writing
+		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
+
+		CACHE_DICTION[unique_identifier] = list_of_htmls
+		f.close()
+		return CACHE_DICTION[unique_identifier]
 
 	else:
-		return CACHE_DICTION[key]
+		return CACHE_DICTION[unique_identifier]
 
 
 
@@ -119,20 +123,14 @@ def get_umsi_data():
 ## whose keys are UMSI people's names, and whose associated values are those people's titles, e.g. "PhD student" or "Associate Professor of Information"...
 umsi_titles = {}
 for i in range(0, 12):
-	print (" ------------ ROUND " + str(i) + " -------------")
 	url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=" + str(i)
-	print (url)
 	r = requests.get(url, headers={'User-Agent': 'SI_CLASS'})
 	get_html = r.text
 	soup = BeautifulSoup(get_html, "html.parser")
 	people = soup.find_all("div",{"class":"views-row"})
 	for person in people:
 		name = person.find("div", {"property":"dc:title"}).h2.text
-		print ("******* name *******")
-		print (name)
 		title = person.find("div", {"class":"field field-name-field-person-titles field-type-text field-label-hidden"}, {"class":"field-item even"}).text
-		print ("******* title *******")
-		print (title)
 		umsi_titles[name] = title
 			# print (" ************* PRINT PEOPLE *********")
 			# for p in people:
@@ -152,15 +150,34 @@ for i in range(0, 12):
 ## Behavior: See instructions. Should search for the input string on twitter and get results. Should check for cached data, use it if possible, and if not, cache the data retrieved.
 ## RETURN VALUE: A list of strings: A list of just the text of 5 different tweets that result from the search.
 
+def get_five_tweets(phrase):
+	unique_identifier = "twitter_{}".format(phrase)
+	if unique_identifier in CACHE_DICTION: # if it is...
+		print('using cached data for', phrase)
+		twitter_results = CACHE_DICTION[unique_identifier] # grab the data from the cache
+	else:
+		print('getting data from internet for', phrase)
+		twitter_results = api.user_timeline(phrase) # get it from the internet
+		# but also, save in the dictionary to cache it
+		f = open(CACHE_FNAME,'w') # open the cache file for writing
+		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
+		f.close()
+		tweets = []
+		for i in range(5):
+			tweets.append(twitter_results[i]["text"])
+
+	return tweets
 
 
 
 ## PART 3 (b) - Write one line of code to invoke the get_five_tweets function with the phrase "University of Michigan" and save the result in a variable five_tweets.
 
+five_tweets = get_five_tweets("University of Michigan")
 
 
 
 ## PART 3 (c) - Iterate over the five_tweets list, invoke the find_urls function that you defined in Part 1 on each element of the list, and accumulate a new list of each of the total URLs in all five of those tweets in a variable called tweet_urls_found. 
+
 
 
 
