@@ -55,16 +55,6 @@ except:
 
 
 
-# try:
-# 	cache_file = open(CACHE_FNAME,'r')
-# 	cache_contents = cache_file.read()
-# 	CACHE_DICTION = json.loads(cache_contents)
-# except:
-# 	CACHE_DICTION = {}
-
-
-
-
 ## PART 1 - Define a function find_urls.
 ## INPUT: any string
 ## RETURN VALUE: a list of strings that represents all of the URLs in the input string
@@ -81,7 +71,8 @@ def find_urls(str):
  #        return matches
  #    else:
  #        return None
-    phrase = r"https*:\/\/.[A-z0-9.]+\w+"
+    # phrase = r"https*:\/\/.[A-z0-9.]+\w+"
+    phrase = r"https*:\/\/.[A-z0-9.]+\w+\/*[A-z0-9]*"
     matches = re.findall(phrase, str)
     return matches
 
@@ -106,14 +97,14 @@ def get_umsi_data():
 			r = requests.get(url, headers={'User-Agent': 'SI_CLASS'})
 			get_url = r.text
 			list_of_htmls.append(get_url)
+		CACHE_DICTION[unique_identifier] = list_of_htmls
 		f = open(CACHE_FNAME,'w') # open the cache file for writing
 		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
-
-		CACHE_DICTION[unique_identifier] = list_of_htmls
 		f.close()
 		return CACHE_DICTION[unique_identifier]
 
 	else:
+		print ("Getting data from cache")
 		return CACHE_DICTION[unique_identifier]
 
 
@@ -151,20 +142,26 @@ for i in range(0, 12):
 ## RETURN VALUE: A list of strings: A list of just the text of 5 different tweets that result from the search.
 
 def get_five_tweets(phrase):
-	unique_identifier = "twitter_{}".format(phrase)
+	unique_identifier = "twitter_University of Michigan"
 	if unique_identifier in CACHE_DICTION: # if it is...
 		print('using cached data for', phrase)
 		twitter_results = CACHE_DICTION[unique_identifier] # grab the data from the cache
+		tweets = []
+		for t in twitter_results["statuses"]:
+			tweets.append(t["text"])
+		tweets = tweets[:5]
 	else:
 		print('getting data from internet for', phrase)
-		twitter_results = api.user_timeline(phrase) # get it from the internet
+		twitter_results = api.search(q=phrase) # get it from the internet
+		CACHE_DICTION[unique_identifier] = twitter_results
 		# but also, save in the dictionary to cache it
+		tweets = []
+		for t in twitter_results["statuses"]:
+			tweets.append(t["text"])
+		tweets = tweets[:5]
 		f = open(CACHE_FNAME,'w') # open the cache file for writing
 		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
 		f.close()
-		tweets = []
-		for i in range(5):
-			tweets.append(twitter_results[i]["text"])
 
 	return tweets
 
@@ -173,13 +170,19 @@ def get_five_tweets(phrase):
 ## PART 3 (b) - Write one line of code to invoke the get_five_tweets function with the phrase "University of Michigan" and save the result in a variable five_tweets.
 
 five_tweets = get_five_tweets("University of Michigan")
+print ("-------- print five tweets -------------")
+print (five_tweets)
 
 
 
 ## PART 3 (c) - Iterate over the five_tweets list, invoke the find_urls function that you defined in Part 1 on each element of the list, and accumulate a new list of each of the total URLs in all five of those tweets in a variable called tweet_urls_found. 
 
+tweet_urls_found = []
 
-
+for i in range(5):
+	print ("------- tweet URL --------")
+	print (find_urls(five_tweets[i]))
+	tweet_urls_found.append(find_urls(five_tweets[i]))
 
 
 
