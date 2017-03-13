@@ -44,8 +44,8 @@ final_base_url = "https://www.si.umich.edu/directory?field_person_firstname_valu
 CACHE_FNAME = "206project2_caching.json"
 
 try:
-	x = open(CACHE_FNAME, 'w')
-	cached_contents = x.write()
+	x = open(CACHE_FNAME, 'r')
+	cached_contents = x.read()
 	CACHE_DICTION = json.loads(cached_contents)
 	x.close()
 
